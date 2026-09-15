@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05070f">
+<meta name="description" content="Eggscape the Permanent Underclass — a neon-lit 3D runner. Roll, hop, dodge the cams, bank the credits.">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Eggscape the Permanent Underclass</title>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="hud" aria-hidden="true">
+  <div class="readout"><span class="label">score</span><b id="score">0</b></div>
+  <div class="readout"><span class="label">grind</span><b id="grind">0m</b></div>
+  <div class="readout"><span class="label">credits</span><b id="credits">0</b></div>
+  <div class="readout"><span class="label">shells</span><b id="shells">▮▮▮</b></div>
+</div>
+
+<button id="mute" type="button" aria-pressed="false">audio on</button>
+
+<section id="overlay" data-state="ready" aria-live="polite">
+  <div id="panel">
+    <p id="overlay-kicker">onboarding complete…</p>
+    <h1>Eggscape<em>the permanent underclass</em></h1>
+    <p id="overlay-lead">Run east. Bank credits. Terms subject to change without notice.</p>
+    <dl id="overlay-stats" hidden></dl>
+    <button id="play" type="button">clock in</button>
+    <ul id="keys">
+      <li><kbd>A</kbd><kbd>D</kbd> lane</li>
+      <li><kbd>W</kbd> hop, twice to flip</li>
+      <li><kbd>S</kbd> slam — onto a cam to take it out</li>
+      <li><kbd>M</kbd> audio</li>
+      <li class="touch">swipe to move · tap to hop</li>
+    </ul>
+  </div>
+</section>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
