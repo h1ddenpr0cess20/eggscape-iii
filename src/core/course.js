@@ -180,7 +180,7 @@ export function createCourse({ seed = 1, difficultyRun = DIFFICULTY_RUN } = {}) 
     const roll = rng();
     if (roll < 0.18) concourse();
     else if (roll < 0.42) patrol(d);
-    else if (roll < 0.62) breach(d);
+    else if (roll < 0.62) breach();
     else if (roll < 0.78) girder(d);
     else if (roll < 0.9) tier(d);
     else checkpoint(d);

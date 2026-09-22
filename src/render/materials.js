@@ -61,8 +61,8 @@ function windows() {
  * which is what a lit tube actually is — a diffuse colour here would go grey
  * in the dark with everything else, and nothing in this city goes grey.
  */
-export function neon(color, strength = 1.6) {
-  const key = `neon:${color}:${strength}`;
+export function neon(color, strength = 1.6, opacity = 1) {
+  const key = `neon:${color}:${strength}:${opacity}`;
   if (!cache.has(key)) {
     cache.set(key, new THREE.MeshStandardMaterial({
       color: 0x000000,
@@ -71,6 +71,8 @@ export function neon(color, strength = 1.6) {
       roughness: 0.4,
       metalness: 0,
       toneMapped: true,
+      transparent: opacity < 1,
+      opacity,
     }));
   }
   return cache.get(key);
