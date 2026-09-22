@@ -90,6 +90,41 @@ hoardings span the walkway on gantries rather than standing beside it, for the
 same reason — a sign at the edge either floats or crowds the lane you are
 trying to read.
 
+## The soundtrack
+
+There is no audio file in the repository, and there is music. `soundtrack.js`
+writes it down — one token per sixteenth, `f2! f2? f3+ab3+c4` — and `music.js`
+plays it on the same AudioContext the sound effects use, on instruments made
+of oscillators and noise. Nothing is built until the page has had a touch,
+because no browser will make a sound before one.
+
+The shift is darksynth in F minor: a kick on every beat, a bass pumping
+sixteenths under it, rain the whole way through, and over the top a brass
+section made of saws, the way the last century imagined this one would sound.
+Fm Fm Db Db Bbm Bbm C C — and the C is major, so every eight bars it nearly
+resolves, and does not.
+
+It builds with the grind. At a hundred metres come the snare, in a room a great
+deal bigger than it is, the hats, and every two bars a camera finding you: one
+sine and a long echo. At three hundred the brass and the arpeggio come in, and
+at six hundred the lead. A cam that gets you muffles all of it for a second.
+
+Between shifts it is hold music. C major, an electric piano and a vibraphone —
+two sines each, one bending the other — on a tape that has been played to a
+great many people who were told their call was important, and that warbles
+like it. It is the only thing in the city in a major key, it is what you hear
+while nothing is happening, and its last bar does not come home. The end of a
+shift is a chime off the public address.
+
+The sequencer never plays anything at the moment it is asked to. It puts
+notes down a quarter of a second ahead on the audio clock, so a frame that
+hitches is not a note that arrives late — and further ahead than that when the
+frames are coming slowly, since a phone that is struggling is struggling on
+every one of them. A tab that comes back from the background drops what it
+missed and stays on the grid, rather than playing a minute of music at once.
+`M` mutes it with everything else, and it keeps time while it is off, so it
+comes back on the beat.
+
 ## How it holds together
 
 The run is a plain object graph with no pixels in it — course, egg, lives,
@@ -132,6 +167,8 @@ src/
     hud.js              The readouts and the panel between shifts
     input.js            Keys and swipes → one frame of intent
     sound.js            Four oscillators' worth of somewhere you should not be
+    music.js            A sequencer that reads its parts out of strings
+    soundtrack.js       Darksynth for the shift, hold music between them
     best.js             The only thing that survives a run
 test/                 node:test, including an autopilot that proves seeds are fair
 ```
@@ -199,7 +236,7 @@ the world. This one just rains.
 | `npm run dev` | Vite |
 | `npm run build` | Bundles to `dist/` |
 | `npm run preview` | Serves the build |
-| `npm test` | `node:test` over the core, the box builder, the HUD and the page |
+| `npm test` | `node:test` over the core, the box builder, the HUD, the page and the music |
 | `npm run lint` | ESLint |
 
 CI runs the lint, the tests on Node 22.12 and 24, and a build that then has to
