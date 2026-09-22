@@ -38,10 +38,11 @@ function shard(kind) {
   core.scale.set(0.8, 1.15, 0.8);
   group.add(core);
 
-  const halo = new THREE.Mesh(new THREE.OctahedronGeometry(0.34, 0), neon(DENOMINATION[kind].trim, 0.6));
+  /** The haze is asked for, not applied afterwards: everything `neon` hands
+   *  back is shared, and a thing that turns its own material see-through
+   *  turns it see-through for whatever else was given the same one. */
+  const halo = new THREE.Mesh(new THREE.OctahedronGeometry(0.34, 0), neon(DENOMINATION[kind].trim, 0.6, 0.16));
   halo.scale.set(0.8, 1.15, 0.8);
-  halo.material.transparent = true;
-  halo.material.opacity = 0.16;
   group.add(halo);
   return group;
 }

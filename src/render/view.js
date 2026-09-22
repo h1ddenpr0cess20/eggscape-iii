@@ -113,7 +113,7 @@ export function createView({ scene, camera, studio }) {
        */
       const range = cam.z - player.z;
       const near = clamp(1 - range / 26, 0, 1);
-      const head = mesh.getObjectByName('head');
+      const { head, lens } = mesh.userData;
       if (head) {
         const sweep = Math.sin(time * 1.3 + cam.z) * 0.7;
         const onto = Math.atan2(cam.x - player.x, Math.max(range, 0.5));
@@ -121,7 +121,6 @@ export function createView({ scene, camera, studio }) {
         /** A drone does not stand still while it does it. */
         if (cam.kind === 1) head.position.y = CAM_LIFT + Math.sin(time * 4.4 + cam.z) * 0.06;
       }
-      const lens = mesh.getObjectByName('lens');
       if (lens) {
         lens.material.emissiveIntensity = 1.5 + near * 1.6 + Math.sin(time * 9 + cam.z) * 0.25 * near;
       }

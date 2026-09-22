@@ -61,11 +61,21 @@ const boards = new Map();
  * sign at the edge either floats — there is nothing out there to stand on —
  * or crowds the lane you are trying to read; slung between two masts it is
  * held up by the thing it is bolted to, and you run under it.
+ *
+ * Its masts are cut to `w`, which is safe to bake into the shared pattern
+ * only because `dress` turns back anything narrower than the full walkway.
  */
 function hoarding(index, w) {
-  if (!boards.has(index)) {
-    const [top, bottom] = COPY[index % COPY.length];
-    const accent = index % 2 ? THEME.magenta : THEME.cyan;
+  /**
+   * Keyed by the slogan, not by the deck. Keyed by the deck it was one
+   * canvas, one texture and a board's worth of geometry per dressed deck —
+   * held in here for the whole run, because ids never come round again — and
+   * every word of it had been painted six signs ago.
+   */
+  const slogan = index % COPY.length;
+  if (!boards.has(slogan)) {
+    const [top, bottom] = COPY[slogan];
+    const accent = slogan % 2 ? THEME.magenta : THEME.cyan;
     const hex = `#${accent.toString(16).padStart(6, '0')}`;
 
     let material = flat({ color: accent });
@@ -92,6 +102,7 @@ function hoarding(index, w) {
     }
 
     const board = new THREE.Group();
+    board.name = 'hoarding';
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), material);
     panel.position.set(0, 3.5, 0);
     /** A plane's front is +z and the egg arrives from -z, so an unturned
@@ -110,9 +121,16 @@ function hoarding(index, w) {
     tube.box(0, 2.52, 0, 3.7, 0.07, 0.07);
     board.add(new THREE.Mesh(tube.geometry(), neon(THEME.magenta, 1.4)));
 
-    boards.set(index, board);
+    boards.set(slogan, board);
   }
-  return boards.get(index).clone();
+
+  /**
+   * A clone shares the pattern's geometry, which outlives any one deck — so
+   * it is marked, and `disposeDeck` leaves everything under it alone.
+   */
+  const sign = boards.get(slogan).clone();
+  sign.userData.shared = true;
+  return sign;
 }
 
 /**

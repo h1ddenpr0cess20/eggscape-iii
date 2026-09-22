@@ -72,9 +72,17 @@ export function createDeck(seg) {
   return group;
 }
 
-/** Materials are shared and stay; the geometry belongs to this deck. */
+/**
+ * Materials are shared and stay; the geometry belongs to this deck — except
+ * under a node the scenery has marked as shared, which is a clone of a
+ * pattern every other deck's copy is drawn from. Dropping one deck's
+ * hoarding used to free the buffers behind every hoarding in the city, and
+ * the driver quietly uploaded them all again on the next frame.
+ */
 export function disposeDeck(group) {
-  group.traverse((node) => node.geometry?.dispose());
+  if (group.userData.shared) return;
+  group.geometry?.dispose();
+  for (const child of group.children) disposeDeck(child);
 }
 
 /**
@@ -181,6 +189,21 @@ export function createCam(kind = 0) {
     reader.name = 'lens';
     group.add(reader);
   }
+
+  /**
+   * The head and the lens, handed over rather than looked up: the renderer
+   * turns one and brightens the other every frame for every cam in shot, and
+   * a search of the group is a search.
+   *
+   * The lens also gets a material of its own. Everything `neon` hands back is
+   * shared, so writing this one's brightness wrote every cam's — the whole
+   * field of them pulsed together on whichever was drawn last, and the one
+   * tell the player gets that *this* cam has seen them said nothing at all.
+   */
+  const lens = group.getObjectByName('lens');
+  if (lens) lens.material = lens.material.clone();
+  group.userData.head = group.getObjectByName('head');
+  group.userData.lens = lens;
 
   return group;
 }
