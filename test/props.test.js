@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { LANES, laneBounds } from '../src/core/tuning.js';
-import { createDeck, disposeDeck } from '../src/render/props.js';
+import { linear } from '../src/gpu/color.js';
+import { createCam, createDeck, disposeDeck } from '../src/render/props.js';
+import { THEME } from '../src/render/theme.js';
 
 /** A deck wide enough and long enough to be dressed, at the given id. */
 function deck(id, dressing = 0) {
@@ -56,5 +58,36 @@ describe('decks', () => {
     const yours = createDeck(deck(5 + 8));
     const shared = sign(yours).children[0].geometry;
     assert.ok(!freed(shared, () => disposeDeck(mine)), 'one deck took every hoarding with it');
+  });
+});
+
+describe('cams', () => {
+  /**
+   * Red is the colour of being seen, and a cam has to be readable as a cam
+   * from forty metres: every kind looks down the lane with a red cone and
+   * carries a red tally light. Each cam's are its own — the renderer animates
+   * them per cam, and shared materials would blink the whole field at once.
+   */
+  it('gives every kind a red gaze and tally light of its own', () => {
+    const red = linear(THEME.alert);
+    for (const kind of [0, 1, 2]) {
+      const one = createCam(kind).userData;
+      const two = createCam(kind).userData;
+      assert.ok(one.gaze && one.tally, `kind ${kind} is missing its tells`);
+      assert.deepEqual(one.gaze.material.color, red);
+      assert.deepEqual(one.tally.material.emissive, red);
+      assert.notEqual(one.gaze.material, two.gaze.material, `kind ${kind} shares its gaze`);
+      assert.notEqual(one.tally.material, two.tally.material, `kind ${kind} shares its tally`);
+    }
+  });
+
+  it('points the gaze back down the lane, at the egg coming the other way', () => {
+    for (const kind of [0, 1, 2]) {
+      const { gaze } = createCam(kind).userData;
+      const p = gaze.geometry.position;
+      const far = Math.min(...Array.from({ length: p.length / 3 }, (_, i) => p[i * 3 + 2]));
+      assert.ok(far < -2, `kind ${kind} looks the wrong way`);
+      assert.ok(gaze.rotation.x < 0, `kind ${kind} looks up instead of at the deck`);
+    }
   });
 });

@@ -124,6 +124,23 @@ export function spill() {
   return cache.get('spill');
 }
 
+/**
+ * What a cam is looking at, drawn as light: red, added to whatever is behind
+ * it, and given to each cam as its own copy so it can brighten on its own
+ * when it has found the egg.
+ */
+export function gaze() {
+  return new BasicMaterial({
+    color: THEME.alert,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.2,
+    depthWrite: false,
+    blending: 'additive',
+    side: 'double',
+  });
+}
+
 /** The smudge under the egg. */
 export function shade() {
   if (!cache.has('shade')) {

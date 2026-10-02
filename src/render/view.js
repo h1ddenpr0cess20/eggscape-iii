@@ -112,7 +112,7 @@ export function createView({ scene, camera, studio }) {
        */
       const range = cam.z - player.z;
       const near = clamp(1 - range / 26, 0, 1);
-      const { head, lens } = mesh.userData;
+      const { head, lens, gaze, tally } = mesh.userData;
       if (head) {
         const sweep = Math.sin(time * 1.3 + cam.z) * 0.7;
         const onto = Math.atan2(cam.x - player.x, Math.max(range, 0.5));
@@ -123,6 +123,12 @@ export function createView({ scene, camera, studio }) {
       if (lens) {
         lens.material.emissiveIntensity = 1.5 + near * 1.6 + Math.sin(time * 9 + cam.z) * 0.25 * near;
       }
+      /** What it is looking at, drawn as a cone of red light — which is what
+       *  makes the sweep, and the moment it stops sweeping, visible at all. */
+      if (gaze) gaze.material.opacity = 0.16 + near * 0.34;
+      /** And a tally light that blinks, faster the closer the egg gets. A
+       *  steady glow is a credit; a blinking red one is a cam. */
+      if (tally) tally.material.emissiveIntensity = Math.sin(time * (5 + near * 9) + cam.z * 3) > 0.45 ? 3.4 : 0.3;
     }
     for (const pool of cams) pool.end();
 

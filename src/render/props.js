@@ -1,8 +1,8 @@
 import { CAM } from '../core/tuning.js';
-import { cylinder, plane, sphere } from '../gpu/geometry.js';
+import { cylinder, Geometry, plane, sphere } from '../gpu/geometry.js';
 import { Group, Mesh } from '../gpu/graph.js';
 import { builder, FACE, tile } from './build.js';
-import { flat, marking, matte, neon, spill, SURFACE } from './materials.js';
+import { flat, gaze, marking, matte, neon, spill, SURFACE } from './materials.js';
 import { dress } from './scenery.js';
 import { THEME } from './theme.js';
 
@@ -86,6 +86,36 @@ export function disposeDeck(group) {
 }
 
 /**
+ * A cone of sight off a lens, pointing down -z — the way the egg comes from —
+ * and tipped down by `drop` so it lands on the deck in front of the cam. It
+ * is bright at the lens and fades to nothing at its far rim, which is all a
+ * vertex colour has to say about it.
+ */
+function sightline(length, radius, drop, segments = 18) {
+  const position = [0, 0, 0];
+  const color = [1, 1, 1];
+  const index = [];
+  for (let i = 0; i <= segments; i++) {
+    const a = (i / segments) * Math.PI * 2;
+    position.push(Math.cos(a) * radius, Math.sin(a) * radius, -length);
+    color.push(0, 0, 0);
+    if (i > 0) index.push(0, i, i + 1);
+  }
+  const mesh = new Mesh(new Geometry({ position, color, index }), gaze());
+  mesh.rotation.x = -Math.atan2(drop, length);
+  mesh.name = 'gaze';
+  return mesh;
+}
+
+/** A tally light: the little red dot that says this one is recording. */
+function tally(x, y, z) {
+  const light = new Mesh(sphere(0.05, 10, 8), neon(THEME.alert, 2.4));
+  light.position.set(x, y, z);
+  light.name = 'tally';
+  return light;
+}
+
+/**
  * Something watching the lane, in the three shapes the city watches in. All
  * of them stand as tall and as wide as the collider says, because the thing
  * you have to hop is the thing you can see — and all of them put their lens
@@ -136,6 +166,10 @@ export function createCam(kind = 0) {
     lens.name = 'lens';
     head.add(lens);
 
+    const sight = sightline(3.2, 0.85, 0.66);
+    sight.position.set(0, 0, -0.23);
+    head.add(sight, tally(0.12, 0.27, 0.12));
+
     group.add(head);
   } else if (kind === 1) {
     /** Drone: no bolts, no mast, and it does not have to stay where it is. */
@@ -159,15 +193,20 @@ export function createCam(kind = 0) {
       }
     }
 
-    /** A strip down the hull, so it is machinery and not a smear. */
+    /** A strip down the hull, so it is machinery and not a smear — in the
+     *  red every cam wears, not the cyan the walkway's own edges are. */
     const trim = builder();
     trim.box(0, 0.08, 0, 0.3, 0.03, 0.38);
-    hull.add(new Mesh(trim.geometry(), neon(THEME.cyan, 1.1)));
+    hull.add(new Mesh(trim.geometry(), neon(THEME.alert, 1.1)));
 
     const eye = new Mesh(sphere(0.12, 12, 10), neon(THEME.alert, 2.2));
     eye.position.set(0, -0.08, -0.14);
     eye.name = 'lens';
     hull.add(eye);
+
+    const sight = sightline(3, 0.8, 0.42);
+    sight.position.set(0, -0.08, -0.26);
+    hull.add(sight, tally(0, 0.14, 0.12));
 
     group.add(hull);
   } else {
@@ -188,22 +227,31 @@ export function createCam(kind = 0) {
     reader.rotation.y = Math.PI;
     reader.name = 'lens';
     group.add(reader);
+
+    const sight = sightline(2.6, 0.7, CAM.height * 0.86);
+    sight.position.set(0, CAM.height * 0.86, -0.12);
+    group.add(sight, tally(0, CAM.height + 0.05, 0));
   }
 
   /**
-   * The head and the lens, handed over rather than looked up: the renderer
-   * turns one and brightens the other every frame for every cam in shot, and
-   * a search of the group is a search.
+   * The head, the lens, the gaze and the tally light, handed over rather
+   * than looked up: the renderer turns, brightens and blinks them every frame
+   * for every cam in shot, and a search of the group is a search.
    *
-   * The lens also gets a material of its own. Everything `neon` hands back is
-   * shared, so writing this one's brightness wrote every cam's — the whole
-   * field of them pulsed together on whichever was drawn last, and the one
-   * tell the player gets that *this* cam has seen them said nothing at all.
+   * The lens and the tally also get materials of their own (the gaze is made
+   * per cam already). Everything `neon` hands back is shared, so writing this
+   * one's brightness wrote every cam's — the whole field of them pulsed
+   * together on whichever was drawn last, and the one tell the player gets
+   * that *this* cam has seen them said nothing at all.
    */
   const lens = group.getObjectByName('lens');
   if (lens) lens.material = lens.material.clone();
+  const light = group.getObjectByName('tally');
+  light.material = light.material.clone();
   group.userData.head = group.getObjectByName('head');
   group.userData.lens = lens;
+  group.userData.gaze = group.getObjectByName('gaze');
+  group.userData.tally = light;
 
   return group;
 }

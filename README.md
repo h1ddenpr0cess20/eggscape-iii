@@ -82,6 +82,14 @@ plate under itself. The rest of a cam is dark equipment on a dark deck at
 night in the rain, findable at speed only by running into it, and an obstacle
 you cannot see is not difficulty.
 
+And all three wear the one colour nothing else in the city does. Red is the
+colour of being seen: every cam throws a cone of it from its lens down the
+lane at you, so the sweep — and the moment it stops sweeping and settles on
+you — can be read from forty metres out, and every cam carries a red tally
+light that blinks, faster the closer you get. A credit glows; a cam blinks.
+Nothing on the walkway that you can collect is red, and nothing that is red
+can be collected.
+
 Nothing beside the walkway can be touched. Railings, gantry signs and the
 towers are all outside the lanes, where the egg cannot reach them, because a
 railing you can run through is a lie and the only thing in a lane is a cam.
