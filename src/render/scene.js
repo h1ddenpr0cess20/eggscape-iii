@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-
+import { PerspectiveCamera, Scene } from '../gpu/graph.js';
+import { createRenderer } from '../gpu/renderer.js';
 import { buildEnvironment, buildLights } from './nightlight.js';
 import { createRain } from './rain.js';
 import { createSky } from './sky.js';
@@ -11,24 +11,23 @@ import { THEME } from './theme.js';
  * and the fog are not finishing touches here — they are the art direction.
  */
 export function createScene(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setClearColor(THEME.haze, 1);
+  const renderer = createRenderer(canvas, { clearColor: THEME.haze, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMapping = 'aces';
   /** Under one, because everything worth seeing in here is emissive and ACES
    *  will happily roll a neon tube all the way to white. */
   renderer.toneMappingExposure = 0.92;
 
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(THEME.haze, 34, 150);
+  const scene = new Scene();
+  scene.fog = { color: THEME.haze, near: 34, far: 150 };
 
   /** 52°, not the 64° this started on: a wide lens stretches whatever sits
    *  away from the middle of the frame, and what sits there is the egg. */
-  const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 420);
+  const camera = new PerspectiveCamera(52, 1, 0.1, 420);
   camera.position.set(0, 3.2, -8.4);
 
   const studio = buildLights(scene);
-  buildEnvironment(scene, renderer);
+  buildEnvironment(scene);
 
   const sky = createSky();
   if (sky) {

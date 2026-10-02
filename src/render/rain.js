@@ -1,4 +1,6 @@
-import * as THREE from 'three';
+import { Geometry } from '../gpu/geometry.js';
+import { Lines } from '../gpu/graph.js';
+import { LineMaterial } from '../gpu/material.js';
 
 /**
  * Rain, as line segments in a box that travels with the camera.
@@ -31,10 +33,9 @@ export function createRain({ random = Math.random } = {}) {
     position.set([x, y, z, x + SLANT * STREAK, y - STREAK, z], i * 6);
   }
 
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(position, 3));
+  const geometry = new Geometry({ position });
 
-  const object = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({
+  const object = new Lines(geometry, new LineMaterial({
     color: 0x9fd8ff,
     transparent: true,
     opacity: 0.3,
@@ -69,7 +70,7 @@ export function createRain({ random = Math.random } = {}) {
         position[at + 4] = y - STREAK;
       }
 
-      geometry.attributes.position.needsUpdate = true;
+      geometry.needsUpdate = true;
     },
   };
 }

@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+import { prefilterInBackground } from '../gpu/environment.js';
+import { DirectionalLight, Group, HemisphereLight } from '../gpu/graph.js';
 
 /**
  * The city, as a cube map: near-black above, the ground glow below, and two
@@ -6,7 +7,7 @@ import * as THREE from 'three';
  * which is what stops the shaded side of a cam going to absolute black — and
  * it is also what lights Marc's shell, in place of the studio he came out of.
  */
-export function buildEnvironment(scene, renderer) {
+export function buildEnvironment(scene) {
   try {
     const c = document.createElement('canvas');
     c.width = 64; c.height = 32;
@@ -26,13 +27,7 @@ export function buildEnvironment(scene, renderer) {
       ctx.fillStyle = spot; ctx.fillRect(x - 14, 3, 28, 28);
     }
 
-    const tex = new THREE.Texture(c);
-    tex.mapping = THREE.EquirectangularReflectionMapping;
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromEquirectangular(tex).texture;
-    pmrem.dispose(); tex.dispose();
+    scene.environment = prefilterInBackground(c);
   } catch {
   }
 }
@@ -51,10 +46,10 @@ export function buildEnvironment(scene, renderer) {
  * storeys up as it is at the turnstile.
  */
 export function buildLights(scene) {
-  const rig = new THREE.Group();
+  const rig = new Group();
   rig.name = 'nightlight';
 
-  const sky = new THREE.HemisphereLight(0x20304e, 0x080b14, 0.55);
+  const sky = new HemisphereLight(0x20304e, 0x080b14, 0.55);
 
   /**
    * The key sits behind the camera and is very slightly warm, which is the
@@ -65,18 +60,18 @@ export function buildLights(scene) {
    * by default — the egg comes out teal on one side and pink on the other,
    * and the only warm thing in the city stops being warm.
    */
-  const key = new THREE.DirectionalLight(0xfff0dc, 1.35);
+  const key = new DirectionalLight(0xfff0dc, 1.35);
   key.position.set(-3, 6, -8);
 
-  const top = new THREE.DirectionalLight(0xbcd2ee, 0.95);
+  const top = new DirectionalLight(0xbcd2ee, 0.95);
   top.position.set(4, 10, 2);
 
   /** The two colours the city is lit by, low and from the sides, where they
    *  catch an edge instead of painting a face. */
-  const cyan = new THREE.DirectionalLight(0x2fe6ff, 0.46);
+  const cyan = new DirectionalLight(0x2fe6ff, 0.46);
   cyan.position.set(-9, 1.2, 3);
 
-  const magenta = new THREE.DirectionalLight(0xff2f9e, 0.3);
+  const magenta = new DirectionalLight(0xff2f9e, 0.3);
   magenta.position.set(9, 1, 5);
 
   rig.add(sky, key, key.target, top, top.target, cyan, cyan.target, magenta, magenta.target);

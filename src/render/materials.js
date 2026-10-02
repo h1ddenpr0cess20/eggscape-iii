@@ -1,5 +1,4 @@
-import * as THREE from 'three';
-
+import { BasicMaterial, StandardMaterial } from '../gpu/material.js';
 import { blot, pool, texture } from './textures.js';
 import { THEME } from './theme.js';
 
@@ -14,12 +13,12 @@ const cache = new Map();
 export function matte(color, { map = null, roughness = 0.82, metalness = 0.12, glow = 0 } = {}) {
   const key = `${color}:${map}:${roughness}:${metalness}:${glow}`;
   if (!cache.has(key)) {
-    cache.set(key, new THREE.MeshStandardMaterial({
+    cache.set(key, new StandardMaterial({
       color,
       map: map ? texture(map) : null,
       roughness,
       metalness,
-      emissive: glow > 0 ? new THREE.Color(color) : new THREE.Color(0x000000),
+      emissive: glow > 0 ? color : 0x000000,
       emissiveIntensity: glow,
     }));
   }
@@ -44,7 +43,7 @@ export const SURFACE = {
  */
 function windows() {
   if (!cache.has('windows')) {
-    cache.set('windows', new THREE.MeshStandardMaterial({
+    cache.set('windows', new StandardMaterial({
       color: 0x0a0d14,
       emissive: 0xffffff,
       emissiveMap: texture('facade'),
@@ -64,9 +63,9 @@ function windows() {
 export function neon(color, strength = 1.6, opacity = 1) {
   const key = `neon:${color}:${strength}:${opacity}`;
   if (!cache.has(key)) {
-    cache.set(key, new THREE.MeshStandardMaterial({
+    cache.set(key, new StandardMaterial({
       color: 0x000000,
-      emissive: new THREE.Color(color),
+      emissive: color,
       emissiveIntensity: strength,
       roughness: 0.4,
       metalness: 0,
@@ -95,7 +94,7 @@ export function denomination(color, glow = 0.85) {
  */
 export function marking() {
   if (!cache.has('marking')) {
-    cache.set('marking', new THREE.MeshStandardMaterial({
+    cache.set('marking', new StandardMaterial({
       color: 0x8a8a8a,
       map: texture('hazard'),
       emissive: 0xffffff,
@@ -114,11 +113,11 @@ export function marking() {
 /** The pool a drone throws under itself, added to whatever it lands on. */
 export function spill() {
   if (!cache.has('spill')) {
-    cache.set('spill', new THREE.MeshBasicMaterial({
+    cache.set('spill', new BasicMaterial({
       map: pool(),
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      blending: 'additive',
       fog: true,
     }));
   }
@@ -128,7 +127,7 @@ export function spill() {
 /** The smudge under the egg. */
 export function shade() {
   if (!cache.has('shade')) {
-    cache.set('shade', new THREE.MeshBasicMaterial({
+    cache.set('shade', new BasicMaterial({
       map: blot(),
       color: 0xffffff,
       transparent: true,
@@ -143,7 +142,7 @@ export function shade() {
 export function flat({ map = null, color = 0xffffff, vertexColors = false, opacity = 1 } = {}) {
   const key = `flat:${map}:${color}:${vertexColors}:${opacity}`;
   if (!cache.has(key)) {
-    cache.set(key, new THREE.MeshBasicMaterial({
+    cache.set(key, new BasicMaterial({
       color,
       map: map ? texture(map) : null,
       vertexColors,

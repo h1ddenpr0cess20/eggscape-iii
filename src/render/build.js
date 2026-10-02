@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import { Geometry } from '../gpu/geometry.js';
 
 /**
  * A box at a time, merged into one buffer. A handrail is thirty boxes, and
@@ -58,12 +58,7 @@ export function builder() {
     get empty() { return index.length === 0; },
 
     geometry() {
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
-      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normal, 3));
-      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-      geometry.setIndex(index);
-      return geometry;
+      return new Geometry({ position, normal, uv, index });
     },
   };
 }
@@ -74,8 +69,11 @@ export function builder() {
  * texture, shared by every deck in the city, however long each one is.
  */
 export function tile(geometry, u, v) {
-  const uv = geometry.attributes.uv;
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * u, uv.getY(i) * v);
-  uv.needsUpdate = true;
+  const uv = geometry.uv;
+  for (let i = 0; i < uv.length; i += 2) {
+    uv[i] *= u;
+    uv[i + 1] *= v;
+  }
+  geometry.needsUpdate = true;
   return geometry;
 }

@@ -1,8 +1,7 @@
-import * as THREE from 'three';
-
 import { CAM_KINDS, CREDIT_KINDS } from '../core/course.js';
 import { approach, clamp, spring } from '../core/motion.js';
 import { laneX, PLAYER } from '../core/tuning.js';
+import { Vec3 } from '../gpu/math.js';
 import { createCredit } from './credits.js';
 import { createEgg, createShadow, EGG_SCALE } from './egg.js';
 import { createCam, createCity, createDeck, disposeDeck } from './props.js';
@@ -72,8 +71,8 @@ export function createView({ scene, camera, studio }) {
   const credits = createPools(scene, CREDIT_KINDS, createCredit);
 
   const squash = { p: 0, v: 0 };
-  const target = new THREE.Vector3();
-  const aim = new THREE.Vector3();
+  const target = new Vec3();
+  const aim = new Vec3();
 
   let level = 0;
   let placed = false;

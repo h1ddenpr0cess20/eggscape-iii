@@ -1,7 +1,7 @@
-import * as THREE from 'three';
-
 import { EGG_HEIGHT } from '../core/shape.js';
 import { PLAYER } from '../core/tuning.js';
+import { plane } from '../gpu/geometry.js';
+import { Group, Mesh } from '../gpu/graph.js';
 import { shade } from './materials.js';
 import { createShell } from './shell.js';
 
@@ -18,12 +18,12 @@ export const EGG_SCALE = PLAYER.height / EGG_HEIGHT;
  * That is the whole point of leaving him alone.
  */
 export function createEgg() {
-  const egg = new THREE.Group();
+  const egg = new Group();
   egg.name = 'egg';
 
   const shell = createShell();
 
-  const body = new THREE.Group();
+  const body = new Group();
   body.name = 'body';
   body.add(shell.mesh);
 
@@ -40,7 +40,7 @@ export function createEgg() {
  * as much as it is the scenery.
  */
 export function createShadow(radius = 0.72) {
-  const blot = new THREE.Mesh(new THREE.PlaneGeometry(radius * 2, radius * 2), shade());
+  const blot = new Mesh(plane(radius * 2, radius * 2), shade());
   blot.rotation.x = -Math.PI / 2;
   blot.renderOrder = 1;
   blot.name = 'shadow';
