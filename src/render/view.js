@@ -1,8 +1,7 @@
-import * as THREE from 'three';
-
 import { CAM_KINDS, CREDIT_KINDS } from '../core/course.js';
 import { approach, clamp, spring } from '../core/motion.js';
 import { laneX, PLAYER } from '../core/tuning.js';
+import { Vec3 } from '../gpu/math.js';
 import { createCredit } from './credits.js';
 import { createEgg, createShadow, EGG_SCALE } from './egg.js';
 import { createCam, createCity, createDeck, disposeDeck } from './props.js';
@@ -72,8 +71,8 @@ export function createView({ scene, camera, studio }) {
   const credits = createPools(scene, CREDIT_KINDS, createCredit);
 
   const squash = { p: 0, v: 0 };
-  const target = new THREE.Vector3();
-  const aim = new THREE.Vector3();
+  const target = new Vec3();
+  const aim = new Vec3();
 
   let level = 0;
   let placed = false;
@@ -113,7 +112,7 @@ export function createView({ scene, camera, studio }) {
        */
       const range = cam.z - player.z;
       const near = clamp(1 - range / 26, 0, 1);
-      const { head, lens } = mesh.userData;
+      const { head, lens, gaze, tally } = mesh.userData;
       if (head) {
         const sweep = Math.sin(time * 1.3 + cam.z) * 0.7;
         const onto = Math.atan2(cam.x - player.x, Math.max(range, 0.5));
@@ -124,6 +123,12 @@ export function createView({ scene, camera, studio }) {
       if (lens) {
         lens.material.emissiveIntensity = 1.5 + near * 1.6 + Math.sin(time * 9 + cam.z) * 0.25 * near;
       }
+      /** What it is looking at, drawn as a cone of red light — which is what
+       *  makes the sweep, and the moment it stops sweeping, visible at all. */
+      if (gaze) gaze.material.opacity = 0.16 + near * 0.34;
+      /** And a tally light that blinks, faster the closer the egg gets. A
+       *  steady glow is a credit; a blinking red one is a cam. */
+      if (tally) tally.material.emissiveIntensity = Math.sin(time * (5 + near * 9) + cam.z * 3) > 0.45 ? 3.4 : 0.3;
     }
     for (const pool of cams) pool.end();
 

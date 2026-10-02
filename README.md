@@ -29,8 +29,9 @@ npm install
 npm run dev               # → http://localhost:5173
 ```
 
-No API keys, no server, no account. It is a static page and three.js. Every
-surface in the city — plate, grate, tower face, hazard stripe, the streets a
+No API keys, no server, no account, and no libraries: it is a static page with
+its own renderer, drawing with WebGPU or WebGL 2.
+Every surface in the city — plate, grate, tower face, hazard stripe, the streets a
 long way down, the sky, every hoarding — is painted onto a canvas at boot, so
 there is nothing to download but the code.
 
@@ -81,6 +82,14 @@ plate under itself. The rest of a cam is dark equipment on a dark deck at
 night in the rain, findable at speed only by running into it, and an obstacle
 you cannot see is not difficulty.
 
+And all three wear the one colour nothing else in the city does. Red is the
+colour of being seen: every cam throws a cone of it from its lens down the
+lane at you, so the sweep — and the moment it stops sweeping and settles on
+you — can be read from forty metres out, and every cam carries a red tally
+light that blinks, faster the closer you get. A credit glows; a cam blinks.
+Nothing on the walkway that you can collect is red, and nothing that is red
+can be collected.
+
 Nothing beside the walkway can be touched. Railings, gantry signs and the
 towers are all outside the lanes, where the egg cannot reach them, because a
 railing you can run through is a lie and the only thing in a lane is a cam.
@@ -129,7 +138,7 @@ comes back on the beat.
 
 The run is a plain object graph with no pixels in it — course, egg, lives,
 score — and the renderer reads a snapshot of it every frame. Nothing in
-`src/core/` imports three.js or touches the DOM, which is why a seed can be
+`src/core/` touches the GPU or the DOM, which is why a seed can be
 played out headlessly in a test and asserted on.
 
 ```
@@ -137,7 +146,7 @@ index.html            Markup only — Vite's entry
 src/
   main.js             The wiring, and nothing else
   styles.css          The HUD, and the terms you agreed to
-  core/               The game. No three.js, no DOM, no randomness it did not seed
+  core/               The game. No GPU, no DOM, no randomness it did not seed
     game.js             Lives, score, credits, and real seconds → fixed ticks
     course.js           The city, laid a deck at a time, ahead of the egg
     player.js           Gravity, lanes, hop, coyote time, landings
@@ -146,7 +155,7 @@ src/
     rng.js              A seeded stream, so a seed is a city
     motion.js           The spring and the chase everything eases on
     emitter.js
-  render/             three.js. Reads snapshots, owns no game state
+  render/             The city, built out of gpu/. Reads snapshots, owns no game state
     scene.js            Renderer, camera, haze, sky and weather
     view.js             Snapshot → scene graph, and the chase camera
     rig.js              Where that camera sits and what it looks at, as arithmetic
@@ -163,6 +172,20 @@ src/
     build.js            Boxes merged into one buffer, and uv tiling
     materials.js        Every surface in the city, shared
     theme.js            The pigments, and what the money is made of
+  gpu/                The renderer. Knows nothing about eggs
+    renderer.js         Picks WebGPU or WebGL 2, and draws a scene with either
+    frame.js            What is visible, in what order, and every uniform byte
+    webgpu.js           The WebGPU backend
+    webgl.js            The WebGL 2 backend
+    graph.js            Nodes, meshes, lines, lights, the camera
+    geometry.js         Vertex data, and the spheres, cylinders and rings
+    material.js         Lit, unlit and line materials, as plain data
+    texture.js          A canvas and how to sample it
+    environment.js      The night, prefiltered into a ladder of blurs
+    dfg.js              The table the specular highlight is read from
+    math.js             Vectors and double-precision matrices
+    color.js            sRGB in, linear light inside, sRGB out
+    shaders/            The GLSL and the WGSL, one of each
   ui/
     hud.js              The readouts and the panel between shifts
     input.js            Keys and swipes → one frame of intent
@@ -216,13 +239,12 @@ building, it is a grey rectangle.
 
 ### The sky is a sphere, and that is deliberate
 
-Handing an equirectangular texture to `scene.background` looks like the
-cheapest possible sky and is not: three runs it through PMREM on the way in,
-PMREM is a blur, and it drags whatever is bright down into the haze and leaves
-a seam lying across the horizon in every frame. `sky.js` hangs the canvas on a
-forty-triangle sphere the camera sits inside instead, which samples it exactly
-as it was painted — and which leans when the camera leans, because a backdrop
-that never moves is the thing that gives a backdrop away.
+`sky.js` hangs the canvas on a forty-triangle sphere the camera sits inside,
+which samples it exactly as it was painted — and which leans when the camera
+leans, because a backdrop that never moves is the thing that gives a backdrop
+away. (It started that way because the library this used to be drawn with
+blurred any sky it was handed as a background, and dragged the bright part of
+it down into the haze. The sphere outlived the library.)
 
 The band at the horizon is the same colour as the fog. That is what lets the
 far end of the walkway dissolve into the sky rather than stop dead against it.
@@ -231,12 +253,45 @@ The rain is in the scene, where weather belongs. The first of these had rain
 that was not rain — glyphs falling down a canvas, because what was falling was
 the world. This one just rains.
 
+### It draws its own pixels
+
+There is no 3D library in here. `src/gpu/` is a renderer written for this
+city and nothing else: a scene graph, three shaders — lit, unlit, and the
+backdrop — and two backends that draw them. Which one draws comes down to
+antialiasing: WebGPU multisamples at 4× and no more, while Chrome gives a
+WebGL canvas 8× on a desktop GPU, which is what the game was tuned under. So
+where WebGL can sample more than 4× it draws, and elsewhere — most phones —
+WebGPU does. Either falls back to the other if it will not start, and
+`?renderer=webgl` or `?renderer=webgpu` in the address picks one by hand. The
+shaders are in `src/gpu/shaders/`, as `.glsl` for WebGL and `.wgsl` for
+WebGPU, and they are the same shaders twice: change a constant in one and
+change it in the other.
+
+The two backends cannot disagree about what to draw, because neither of them
+decides. `frame.js` walks the scene once a frame, culls it, sorts it — solid
+things first, see-through things far to near — and packs every uniform into
+blocks of vec4s and mat4s that std140 and WGSL lay out byte for byte the same.
+A backend only says *draw this*. `test/gpu.test.js` reads the GLSL and the
+WGSL and fails if either has drifted from what `frame.js` packs.
+
+The lighting is the lighting the city was designed under, kept term for term:
+GGX specular with multiple-scattering compensation read off the same DFG
+table, Charlie sheen and the clearcoat on Marc's shell, ACES at 0.92, fog
+mixed in after the encode. The night the lit surfaces reflect is prefiltered
+at boot into a cube-UV ladder of seven blurs by GGX importance sampling — on
+the CPU, in a worker, because the cube is sixteen texels a side — and the
+shaders pick a rung by roughness through the same curve as before. Rendered
+side by side with the build that used a library, frame for frame down a
+seeded run, the WebGL picture agrees with it to within one level in 255, and
+the WebGPU one differs only in which pixels along an antialiased edge get a
+sample.
+
 | Script | |
 |---|---|
 | `npm run dev` | Vite |
 | `npm run build` | Bundles to `dist/` |
 | `npm run preview` | Serves the build |
-| `npm test` | `node:test` over the core, the box builder, the HUD, the page and the music |
+| `npm test` | `node:test` over the core, the renderer, the box builder, the HUD, the page and the music |
 | `npm run lint` | ESLint |
 
 CI runs the lint, the tests on Node 22.12 and 24, and a build that then has to

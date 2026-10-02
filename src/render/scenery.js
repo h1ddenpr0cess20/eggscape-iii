@@ -1,6 +1,8 @@
-import * as THREE from 'three';
-
 import { LANES } from '../core/tuning.js';
+import { plane } from '../gpu/geometry.js';
+import { Group, Mesh } from '../gpu/graph.js';
+import { BasicMaterial } from '../gpu/material.js';
+import { Texture } from '../gpu/texture.js';
 import { builder, tile } from './build.js';
 import { flat, neon, SURFACE } from './materials.js';
 import { THEME } from './theme.js';
@@ -33,7 +35,7 @@ function railing(side, w, l) {
   steel.box(x, head, (from + to) / 2, 0.11, 0.09, to - from);
   steel.box(x, 0.52, (from + to) / 2, 0.06, 0.06, to - from);
 
-  const mesh = new THREE.Mesh(steel.geometry(), SURFACE.rail());
+  const mesh = new Mesh(steel.geometry(), SURFACE.rail());
   mesh.name = 'railing';
   return mesh;
 }
@@ -95,15 +97,13 @@ function hoarding(index, w) {
         ctx.font = 'bold 74px ui-monospace, monospace';
         ctx.fillText(top, 256, 112);
         ctx.fillText(bottom, 256, 194);
-        const tex = new THREE.CanvasTexture(canvas);
-        tex.colorSpace = THREE.SRGBColorSpace;
-        material = new THREE.MeshBasicMaterial({ map: tex });
+        material = new BasicMaterial({ map: new Texture(canvas) });
       }
     }
 
-    const board = new THREE.Group();
+    const board = new Group();
     board.name = 'hoarding';
-    const panel = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), material);
+    const panel = new Mesh(plane(3.6, 1.8), material);
     panel.position.set(0, 3.5, 0);
     /** A plane's front is +z and the egg arrives from -z, so an unturned
      *  hoarding sells to the empty walkway behind it. */
@@ -115,11 +115,11 @@ function hoarding(index, w) {
     for (const side of [-1, 1]) rig.box(side * reach, (ROOT + 4.7) / 2, 0, 0.18, 4.7 - ROOT, 0.18);
     rig.box(0, 4.66, 0, reach * 2, 0.16, 0.16);
     for (const side of [-1, 1]) rig.box(side * 1.5, 4.2, 0, 0.07, 0.95, 0.07);
-    board.add(new THREE.Mesh(rig.geometry(), SURFACE.frame()));
+    board.add(new Mesh(rig.geometry(), SURFACE.frame()));
 
     const tube = builder();
     tube.box(0, 2.52, 0, 3.7, 0.07, 0.07);
-    board.add(new THREE.Mesh(tube.geometry(), neon(THEME.magenta, 1.4)));
+    board.add(new Mesh(tube.geometry(), neon(THEME.magenta, 1.4)));
 
     boards.set(slogan, board);
   }
@@ -146,7 +146,7 @@ function hoarding(index, w) {
  * and nothing gives a backdrop away faster.
  */
 function tower(wide, high, base) {
-  const group = new THREE.Group();
+  const group = new Group();
 
   const shaft = builder();
   shaft.box(0, base + high / 2, 0, wide, high, wide);
@@ -157,11 +157,11 @@ function tower(wide, high, base) {
    * a handspan apart, which from three hundred metres away is not a building,
    * it is a grey rectangle.
    */
-  group.add(new THREE.Mesh(tile(shaft.geometry(), wide / 40, high / 64), SURFACE.facade()));
+  group.add(new Mesh(tile(shaft.geometry(), wide / 40, high / 64), SURFACE.facade()));
 
   const crown = builder();
   crown.box(0, base + high + 0.5, 0, wide * 0.28, 0.6, wide * 0.28);
-  group.add(new THREE.Mesh(crown.geometry(), neon(THEME.cyan, 1.3)));
+  group.add(new Mesh(crown.geometry(), neon(THEME.cyan, 1.3)));
 
   return group;
 }
